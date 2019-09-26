@@ -1,0 +1,159 @@
+import ch.so.agi.gretl.api.TransferSet
+import ch.so.agi.gretl.tasks.*
+import java.nio.file.Paths
+import de.undercouch.gradle.tasks.download.Download
+
+apply plugin: "de.undercouch.download"
+apply plugin: "ch.so.agi.gretl"
+
+ext {
+    pathToTempFolder = System.getProperty("java.io.tmpdir")
+    pathToUnzipFolder = Paths.get(pathToTempFolder, 'unzip_data')
+
+    iliModelCadastralSurveying = "DM01AVSO24LV95"
+    dbSchemaCadastralSurveying = "agi_dm01avso24"
+
+    iliModelPLZOrtschaft = "PLZOCH1LV95D"
+    dbSchemaPLZOrtschaft = "agi_plz_ortschaften"
+    pathToPlzDataZip = Paths.get(pathToTempFolder, "PLZO_INTERLIS_LV95.zip")
+    plzItfFilePath = Paths.get(pathToUnzipFolder.toString(), 'PLZO_INTERLIS_LV95', 'PLZO_ITF_LV95.itf')
+
+    iliModelAdminEinteilung = "SO_AGI_AV_GB_Administrative_Einteilungen_20180613"
+    dbSchemaAdminEinteilung = "agi_av_gb_admin_einteilung"
+}    
+
+task createSchemaCadastralSurveying(type: SqlExecutor){
+    database = [dbUriEdit, "admin", "admin"]
+    sqlFiles = ['dm01avso24/prescript.sql','dm01avso24/agi_dm01avso24.sql','dm01avso24/postscript.sql']
+}
+
+task replaceLandUsePlansData_2407(type: Ili2pgReplace) {
+    database = [dbUriEdit, dbUserEdit, dbPwdEdit]
+    models = iliModelCadastralSurveying
+    dbschema = dbSchemaCadastralSurveying
+    dataFile = file("dm01avso24/240700.itf")
+    dataset = "2407"
+    disableValidation = true
+}
+
+task createSchemaPlzOrtschaft(type: SqlExecutor){
+    database = [dbUriEdit, "admin", "admin"]
+    sqlFiles = ['plzortschaft/prescript.sql','plzortschaft/agi_plz_ortschaften.sql','plzortschaft/postscript.sql']
+}
+
+task downloadPlzOrtschaft(type: Download) {
+    description = "Download PLZ/Ortschaft."
+    src 'http://data.geo.admin.ch/ch.swisstopo-vd.ortschaftenverzeichnis_plz/PLZO_INTERLIS_LV95.zip'
+    dest pathToTempFolder
+    overwrite true  
+}
+
+task unzipPlzOrtschaftData(type: Copy, dependsOn: 'downloadPlzOrtschaft') {
+    description = "Unzip heruntergeladene Daten (data.zip)."
+    from zipTree(pathToPlzDataZip)
+    into file(pathToUnzipFolder)
+    include "**/*.itf" 
+}
+
+task importPlzOrtschaftData(type: Ili2pgImport, dependsOn: 'unzipPlzOrtschaftData') {
+    description = "Import plz_ortschaften-Daten in die Datenbank."
+    database = [dbUriEdit, dbUserEdit, dbPwdEdit]
+    dbschema = dbSchemaPLZOrtschaft
+    models = iliModelPLZOrtschaft
+    dataFile = file(plzItfFilePath)
+    disableValidation = true  
+}
+
+task createSchemaAdminEinteilung(type: SqlExecutor){
+    database = [dbUriEdit, "admin", "admin"]
+    sqlFiles = ['administrative_einteilungen/prescript.sql','administrative_einteilungen/agi_av_gb_admin_einteilung.sql','administrative_einteilungen/postscript.sql']
+}
+
+task importAdminEinteilung(type: Ili2pgImport) {
+    database = [dbUriEdit, dbUserEdit, dbPwdEdit]
+    models = iliModelAdminEinteilung
+    dbschema = dbSchemaAdminEinteilung
+    dataFile = file("administrative_einteilungen/administrative_einteilungen.xtf")
+    disableValidation = true
+}
+
+
+/*
+landUsePlansDataSets.each { landUsePlansDataSet ->
+    def dataSet = landUsePlansDataSet.toString()
+    task "downloadLandUsePlansData_$dataSet"(type: Download) {
+        src landUsePlansBaseUrl + dataSet + ".xtf"
+        dest pathToTempFolder
+        overwrite true
+
+        doLast {
+            println "File downloaded to: " + pathToTempFolder
+        }        
+    }
+
+    task "replaceLandUsePlansData_$dataSet"(type: Ili2pgReplace, dependsOn: "downloadLandUsePlansData_$dataSet") {
+        database = [dbUriEdit, dbUserEdit, dbPwdEdit]
+        models = iliModelLandUsePlans
+        dbschema = dbSchemaLandUsePlans
+        dataFile = file(Paths.get(pathToTempFolder.toString(), dataSet + ".xtf"))
+        dataset = dataSet
+        disableValidation = true
+    }
+}
+
+task replaceLandUsePlansData() {
+    dependsOn {
+        tasks.findAll { task -> task.name.startsWith('replaceLandUsePlansData_') }
+    }
+}
+*/
+
+/*
+task uploadToS3(type: AmazonS3FileUploadTask) {
+    description = "Hochladen der exportierten Datei auf S3."
+	file file("$rootDir/" + xtfFileName) 
+	bucketName "ch.so.arp.nutzungsplanung.oereb"
+	key xtfFileName
+
+	def m = new ObjectMetadata()
+	m.setCacheControl("no-cache, no-store")
+	objectMetadata = m
+}
+*/
+
+/*
+task downloadFederalLegalBasis(type: Download) {
+    description = "Download Bundesgesetze ($federalLegalBaseDataSet)."
+    src federalLegalBasisBaseUrl + federalLegalBaseDataSet + ".xml"
+    dest pathToTempFolder
+    overwrite true      
+}
+
+task importFederalLegalBasisToOereb(type: Ili2pgReplace, dependsOn: 'downloadFederalLegalBasis') {
+    description = "Import Bundesgesetze ($federalLegalBaseDataSet) in das stage Schema."
+    database = [dbUriOereb, dbUserOereb, dbPwdOereb]
+    models = iliModelVorschriften
+    dbschema = "stage"
+    dataFile = file(Paths.get(pathToTempFolder.toString(), federalLegalBaseDataSet + ".xml"))
+    dataset = "ch.admin.bk.gesetze" 
+    disableValidation = true
+}
+
+task downloadCantonalLegalBasis(type: Download) {
+    description = "Download kantonale Gesetze ($cantonalLegalBaseDataSet)."
+    src cantonalLegalBasisBaseUrl + cantonalLegalBaseDataSet + ".xtf"
+    dest pathToTempFolder
+    overwrite true    
+}
+
+task importCantonalLegalBasisToOereb(type: Ili2pgReplace, dependsOn: 'downloadCantonalLegalBasis') {
+    description = "Import kantonale Gesetze ($cantonalLegalBaseDataSet) in das stage Schema."
+    database = [dbUriOereb, dbUserOereb, dbPwdOereb]
+    models = iliModelVorschriften
+    dbschema = "stage"
+    dataFile = file(Paths.get(pathToTempFolder.toString(), cantonalLegalBaseDataSet + ".xtf"))
+    dataset = cantonalLegalBaseDataSet 
+    disableValidation = true
+}
+*/
+
