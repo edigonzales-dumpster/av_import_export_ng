@@ -20,6 +20,9 @@ ext {
 
     iliModelAdminEinteilung = "SO_AGI_AV_GB_Administrative_Einteilungen_20180613"
     dbSchemaAdminEinteilung = "agi_av_gb_admin_einteilung"
+
+    iliModelMOpublic = "SO_AGI_MOpublic_20190424"
+    dbSchemaMOpublic = "agi_mopublic_pub"
 }    
 
 task createSchemaCadastralSurveying(type: SqlExecutor){
@@ -77,83 +80,7 @@ task importAdminEinteilung(type: Ili2pgImport) {
     disableValidation = true
 }
 
-
-/*
-landUsePlansDataSets.each { landUsePlansDataSet ->
-    def dataSet = landUsePlansDataSet.toString()
-    task "downloadLandUsePlansData_$dataSet"(type: Download) {
-        src landUsePlansBaseUrl + dataSet + ".xtf"
-        dest pathToTempFolder
-        overwrite true
-
-        doLast {
-            println "File downloaded to: " + pathToTempFolder
-        }        
-    }
-
-    task "replaceLandUsePlansData_$dataSet"(type: Ili2pgReplace, dependsOn: "downloadLandUsePlansData_$dataSet") {
-        database = [dbUriEdit, dbUserEdit, dbPwdEdit]
-        models = iliModelLandUsePlans
-        dbschema = dbSchemaLandUsePlans
-        dataFile = file(Paths.get(pathToTempFolder.toString(), dataSet + ".xtf"))
-        dataset = dataSet
-        disableValidation = true
-    }
+task createSchemaMOpublic(type: SqlExecutor){
+    database = [dbUriPub, "admin", "admin"]
+    sqlFiles = ['mopublic/prescript.sql','mopublic/agi_mopublic_20190424.sql','mopublic/postscript.sql']
 }
-
-task replaceLandUsePlansData() {
-    dependsOn {
-        tasks.findAll { task -> task.name.startsWith('replaceLandUsePlansData_') }
-    }
-}
-*/
-
-/*
-task uploadToS3(type: AmazonS3FileUploadTask) {
-    description = "Hochladen der exportierten Datei auf S3."
-	file file("$rootDir/" + xtfFileName) 
-	bucketName "ch.so.arp.nutzungsplanung.oereb"
-	key xtfFileName
-
-	def m = new ObjectMetadata()
-	m.setCacheControl("no-cache, no-store")
-	objectMetadata = m
-}
-*/
-
-/*
-task downloadFederalLegalBasis(type: Download) {
-    description = "Download Bundesgesetze ($federalLegalBaseDataSet)."
-    src federalLegalBasisBaseUrl + federalLegalBaseDataSet + ".xml"
-    dest pathToTempFolder
-    overwrite true      
-}
-
-task importFederalLegalBasisToOereb(type: Ili2pgReplace, dependsOn: 'downloadFederalLegalBasis') {
-    description = "Import Bundesgesetze ($federalLegalBaseDataSet) in das stage Schema."
-    database = [dbUriOereb, dbUserOereb, dbPwdOereb]
-    models = iliModelVorschriften
-    dbschema = "stage"
-    dataFile = file(Paths.get(pathToTempFolder.toString(), federalLegalBaseDataSet + ".xml"))
-    dataset = "ch.admin.bk.gesetze" 
-    disableValidation = true
-}
-
-task downloadCantonalLegalBasis(type: Download) {
-    description = "Download kantonale Gesetze ($cantonalLegalBaseDataSet)."
-    src cantonalLegalBasisBaseUrl + cantonalLegalBaseDataSet + ".xtf"
-    dest pathToTempFolder
-    overwrite true    
-}
-
-task importCantonalLegalBasisToOereb(type: Ili2pgReplace, dependsOn: 'downloadCantonalLegalBasis') {
-    description = "Import kantonale Gesetze ($cantonalLegalBaseDataSet) in das stage Schema."
-    database = [dbUriOereb, dbUserOereb, dbPwdOereb]
-    models = iliModelVorschriften
-    dbschema = "stage"
-    dataFile = file(Paths.get(pathToTempFolder.toString(), cantonalLegalBaseDataSet + ".xtf"))
-    dataset = cantonalLegalBaseDataSet 
-    disableValidation = true
-}
-*/
-

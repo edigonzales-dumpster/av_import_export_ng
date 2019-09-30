@@ -32,10 +32,21 @@ export ORG_GRADLE_PROJECT_dbPwdPub="gretl"
 ### agi_mopublic
 Der GRETL-Job im dev-Ordner dient zum Herstellen der Entwicklungsumgebung. Dazu gehören insbesondere verschiedene Imports von Daten (DM01, PLZ/Ortschaft, Administrative Einteilungen).
 
-Initialize Edit-DB:
+Initialisieren der Edit-DB (alle Tasks der folgenden Subkapitel zusammen):
 ```
 ./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/dev/ -b build-dev.gradle createSchemaCadastralSurveying replaceLandUsePlansData_2407 createSchemaPlzOrtschaft importPlzOrtschaftData createSchemaAdminEinteilung importAdminEinteilung
 ```
+
+Initialisieren der Pub-DB (erzeugen des neuen MOpublic-Schemas):
+```
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/dev/ -b build-dev.gradle createSchemaMOpublic
+```
+
+Ausführen des eigentlichen Umbau-Jobs:
+```
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/ -b build.gradle transferAgiMopublic
+```
+
 
 #### AV-Schema anlegen und importieren
 ```
