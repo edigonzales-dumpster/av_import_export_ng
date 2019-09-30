@@ -12,6 +12,19 @@ java -jar ${ILI2PG_PATH} \
 --createscript agi_mopublic_20190424.sql
 ```
 
+### SO_AGI_Grundbuchplan
+Beinhaltet vier spezielle Klassen, die zur Darstellung des Planes für das Grundbuch notwendig sind.
+
+DDL-erzeugen:
+```
+ILI2PG_PATH=/Users/stefan/apps/ili2pg-4.3.0/ili2pg-4.3.0.jar  
+java -jar ${ILI2PG_PATH} \
+--dbschema agi_grundbuchplan_pub --models SO_AGI_Grundbuchplan_20190930 --modeldir ".;http://models.geo.admin.ch" \
+--defaultSrsCode 2056 --createGeomIdx --createFk --createFkIdx --createEnumTabs --beautifyEnumDispName --createMetaInfo --createNumChecks --nameByTopic --strokeArcs \
+--createscript agi_grundbuchplan_20190930.sql
+```
+
+
 ## Gretljobs
 Hochfahren der Entwicklungs-Edit- und Pub-DB:
 
@@ -34,23 +47,23 @@ Der GRETL-Job im dev-Ordner dient zum Herstellen der Entwicklungsumgebung. Dazu 
 
 Initialisieren der Edit-DB (alle Tasks der folgenden Subkapitel zusammen):
 ```
-./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/dev/ -b build-dev.gradle createSchemaCadastralSurveying replaceLandUsePlansData_2407 createSchemaPlzOrtschaft importPlzOrtschaftData createSchemaAdminEinteilung importAdminEinteilung
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic_pub/dev/ -b build-dev.gradle createSchemaCadastralSurveying replaceLandUsePlansData_2407 createSchemaPlzOrtschaft importPlzOrtschaftData createSchemaAdminEinteilung importAdminEinteilung
 ```
 
 Initialisieren der Pub-DB (erzeugen des neuen MOpublic-Schemas):
 ```
-./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/dev/ -b build-dev.gradle createSchemaMOpublic
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic_pub/dev/ -b build-dev.gradle createSchemaMOpublic
 ```
 
 Ausführen des eigentlichen Umbau-Jobs:
 ```
-./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/ -b build.gradle transferAgiMopublic
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic_pub/ -b build.gradle transferAgiMopublic
 ```
 
 
 #### AV-Schema anlegen und importieren
 ```
-./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/dev/ -b build-dev.gradle createSchemaCadastralSurveying replaceLandUsePlansData_2407
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic_pub/dev/ -b build-dev.gradle createSchemaCadastralSurveying replaceLandUsePlansData_2407
 
 ```
 
@@ -66,7 +79,7 @@ java -jar ${ILI2PG_PATH} \
 
 Schema erstellen und Daten importieren:
 ```
-./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/dev/ -b build-dev.gradle createSchemaPlzOrtschaft importPlzOrtschaftData
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic_pub/dev/ -b build-dev.gradle createSchemaPlzOrtschaft importPlzOrtschaftData
 ```
 
 #### Administrative Eineilungen
@@ -90,5 +103,17 @@ java -jar ${ILI2PG_PATH} \
 
 DB-Schema anlegen und Daten importieren:
 ```
-./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic/dev/ -b build-dev.gradle createSchemaAdminEinteilung importAdminEinteilung
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic_pub/dev/ -b build-dev.gradle createSchemaAdminEinteilung importAdminEinteilung
+```
+
+### agi_grundbuchplan
+
+Initialisieren der Pub-DB (erzeugen des neuen Grundbuchplans-Schemas):
+```
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_grundbuchplan_pub/dev/ -b build-dev.gradle createSchemaGrundbuchplan
+```
+
+Ausführen des eigentlichen Umbau-Jobs:
+```
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_grundbuchplan_pub/ -b build.gradle transferAgiGrundbuchplan
 ```
