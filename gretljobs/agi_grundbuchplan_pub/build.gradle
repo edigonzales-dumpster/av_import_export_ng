@@ -9,5 +9,6 @@ task transferAgiGrundbuchplan(type: Db2Db){
     targetDb = [dbUriPub, dbUserPub, dbPwdPub]
     transferSets = [
             new TransferSet("agi_grundbuchplan_pub_grundbuchplan_liegenschaft.sql", 'agi_grundbuchplan_pub.grundbuchplan_liegenschaft', true),
+            new TransferSet("agi_grundbuchplan_pub_grundbuchplan_grenzpunkt.sql", 'agi_grundbuchplan_pub.grundbuchplan_grenzpunkt', true),
     ];        
 }
