@@ -53,7 +53,7 @@ FROM
         WHERE 
             liegen.geometrie && proj.geometrie
             AND 
-            ST_Distance(ST_PointOnSurface(liegen.geometrie), proj.geometrie) = 0
+            ST_Distance(ST_PointOnSurface(ST_Buffer(liegen.geometrie,0)), proj.geometrie) = 0
         
         UNION ALL
             
@@ -77,7 +77,7 @@ FROM
         WHERE 
             liegen.geometrie && proj.geometrie
             AND 
-            ST_Distance(ST_PointOnSurface(liegen.geometrie), proj.geometrie) = 0
+            ST_Distance(ST_PointOnSurface(ST_Buffer(liegen.geometrie,0)), proj.geometrie) = 0
         ) AS mutation_true
     ) AS liegen_in_mutation
     ON liegen_in_mutation.t_id = c.t_id
