@@ -42,6 +42,15 @@ export ORG_GRADLE_PROJECT_dbUserPub="gretl"
 export ORG_GRADLE_PROJECT_dbPwdPub="gretl"
 ```
 
+```
+export ORG_GRADLE_PROJECT_dbUriEdit="jdbc:postgresql://geodb.rootso.org/edit"
+export ORG_GRADLE_PROJECT_dbUserEdit="bjsvwzie"
+export ORG_GRADLE_PROJECT_dbPwdEdit="Ziegler60"
+export ORG_GRADLE_PROJECT_dbUriPub="jdbc:postgresql://pub-db/pub"
+export ORG_GRADLE_PROJECT_dbUserPub="gretl"
+export ORG_GRADLE_PROJECT_dbPwdPub="gretl"
+```
+
 ### agi_mopublic
 Der GRETL-Job im dev-Ordner dient zum Herstellen der Entwicklungsumgebung. Dazu gehören insbesondere verschiedene Imports von Daten (DM01, PLZ/Ortschaft, Administrative Einteilungen).
 

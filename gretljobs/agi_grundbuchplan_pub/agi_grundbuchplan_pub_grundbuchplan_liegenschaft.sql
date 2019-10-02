@@ -45,6 +45,7 @@ FROM
     LEFT JOIN 
     (
         SELECT 
+            DISTINCT ON (liegen.t_id)
             liegen.t_id,
             CAST('TRUE' AS BOOLEAN) AS mutation
         FROM 
@@ -70,6 +71,7 @@ FROM
         EXCEPT
         
         SELECT 
+            DISTINCT ON (liegen.t_id)
             liegen.t_id
         FROM 
             agi_dm01avso24.liegenschaften_liegenschaft as liegen, 
@@ -81,4 +83,4 @@ FROM
         ) AS mutation_true
     ) AS liegen_in_mutation
     ON liegen_in_mutation.t_id = c.t_id
-;
+
