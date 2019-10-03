@@ -8,13 +8,10 @@ task transferAgiGrundbuchplan(type: Db2Db){
     sourceDb = [dbUriEdit, dbUserEdit, dbPwdEdit]
     targetDb = [dbUriPub, dbUserPub, dbPwdPub]
     transferSets = [
-            //new TransferSet("agi_grundbuchplan_pub_grundbuchplan_liegenschaft.sql", 'agi_grundbuchplan_pub.grundbuchplan_liegenschaft', true),
-            //new TransferSet("agi_grundbuchplan_pub_grundbuchplan_grenzpunkt.sql", 'agi_grundbuchplan_pub.grundbuchplan_grenzpunkt', true),
-            //new TransferSet("agi_grundbuchplan_pub_grundbuchplan_grundstueckpos.sql", 'agi_grundbuchplan_pub.grundbuchplan_grundstueckpos', true),
-            
-            
-            // TODO: the view...
-            //new TransferSet("agi_grundbuchplan_pub_grundbuchplan_grundstueckpos.sql", 'v_bodenbedeckung_boflaechesymbol', true),
+            new TransferSet("agi_grundbuchplan_pub_grundbuchplan_liegenschaft.sql", 'agi_grundbuchplan_pub.grundbuchplan_liegenschaft', true),
+            new TransferSet("agi_grundbuchplan_pub_grundbuchplan_grenzpunkt.sql", 'agi_grundbuchplan_pub.grundbuchplan_grenzpunkt', true),
+            new TransferSet("agi_grundbuchplan_pub_grundbuchplan_grundstueckpos.sql", 'agi_grundbuchplan_pub.grundbuchplan_grundstueckpos', true),
+            new TransferSet("agi_grundbuchplan_pub_grundbuchplan_bodenbedeckungsymbol.sql", 'agi_grundbuchplan_pub.grundbuchplan_bodenbedeckungsymbol', true)
     ];
 
     finalizedBy {

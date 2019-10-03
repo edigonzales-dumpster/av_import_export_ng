@@ -44,8 +44,8 @@ export ORG_GRADLE_PROJECT_dbPwdPub="gretl"
 
 ```
 export ORG_GRADLE_PROJECT_dbUriEdit="jdbc:postgresql://geodb.rootso.org/edit"
-export ORG_GRADLE_PROJECT_dbUserEdit="bjsvwzie"
-export ORG_GRADLE_PROJECT_dbPwdEdit="Ziegler60"
+export ORG_GRADLE_PROJECT_dbUserEdit="YYYYYYY"
+export ORG_GRADLE_PROJECT_dbPwdEdit="XXXXXXX"
 export ORG_GRADLE_PROJECT_dbUriPub="jdbc:postgresql://pub-db/pub"
 export ORG_GRADLE_PROJECT_dbUserPub="gretl"
 export ORG_GRADLE_PROJECT_dbPwdPub="gretl"
