@@ -9,9 +9,26 @@ apply plugin: "ch.so.agi.gretl"
 ext {
     iliModelGrundbuchplan = "SO_AGI_Grundbuchplan_20190930"
     dbSchemaGrundbuchplan = "agi_grundbuchplan_pub"
+
+    iliModelAdminEinteilung = "SO_AGI_AV_GB_Administrative_Einteilungen_Publikation_20180822"
+    dbSchemaAdminEinteilung = "agi_av_gb_admin_einteilung_pub"
 }    
 
 task createSchemaGrundbuchplan(type: SqlExecutor){
     database = [dbUriPub, "admin", "admin"]
     sqlFiles = ['grundbuchplan/prescript.sql','grundbuchplan/agi_grundbuchplan_20190930.sql','grundbuchplan/postscript.sql']
+}
+
+task createSchemaAdminEinteilung(type: SqlExecutor){
+    database = [dbUriPub, "admin", "admin"]
+    sqlFiles = ['administrative_einteilung_pub/prescript.sql','administrative_einteilung_pub/agi_av_gb_admin_einteilung_pub.sql','administrative_einteilung_pub/postscript.sql']
+}
+
+task importAdminEinteilung(type: Ili2pgImport) {
+    description = "Import administrative Einteilung (pub) in die Datenbank."
+    database = [dbUriPub, dbUserPub, dbPwdPub]
+    dbschema = dbSchemaAdminEinteilung
+    models = iliModelAdminEinteilung
+    dataFile = file("administrative_einteilung_pub/ch.so.agi.av-gb-administrative-einteilung-pub.xtf")
+    disableValidation = true  
 }

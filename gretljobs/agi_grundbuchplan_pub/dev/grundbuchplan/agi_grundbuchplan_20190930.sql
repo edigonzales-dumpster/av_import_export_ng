@@ -1,5 +1,21 @@
 CREATE SCHEMA IF NOT EXISTS agi_grundbuchplan_pub;
 CREATE SEQUENCE agi_grundbuchplan_pub.t_ili2db_seq;;
+-- GeometryCHLV95_V1.SurfaceStructure
+CREATE TABLE agi_grundbuchplan_pub.surfacestructure (
+  T_Id bigint PRIMARY KEY DEFAULT nextval('agi_grundbuchplan_pub.t_ili2db_seq')
+  ,T_Seq bigint NULL
+  ,surface geometry(POLYGON,2056) NULL
+  ,multisurface_surfaces bigint NULL
+)
+;
+CREATE INDEX surfacestructure_surface_idx ON agi_grundbuchplan_pub.surfacestructure USING GIST ( surface );
+CREATE INDEX surfacestructure_multisurface_surfaces_idx ON agi_grundbuchplan_pub.surfacestructure ( multisurface_surfaces );
+-- GeometryCHLV95_V1.MultiSurface
+CREATE TABLE agi_grundbuchplan_pub.multisurface (
+  T_Id bigint PRIMARY KEY DEFAULT nextval('agi_grundbuchplan_pub.t_ili2db_seq')
+  ,T_Seq bigint NULL
+)
+;
 -- SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol
 CREATE TABLE agi_grundbuchplan_pub.grundbuchplan_bodenbedeckungsymbol (
   T_Id bigint PRIMARY KEY DEFAULT nextval('agi_grundbuchplan_pub.t_ili2db_seq')
@@ -32,6 +48,30 @@ COMMENT ON COLUMN agi_grundbuchplan_pub.grundbuchplan_grenzpunkt.gueltigkeit IS 
 COMMENT ON COLUMN agi_grundbuchplan_pub.grundbuchplan_grenzpunkt.punktzeichen IS 'Text-Repräsentation des Punkzeichens';
 COMMENT ON COLUMN agi_grundbuchplan_pub.grundbuchplan_grenzpunkt.geometrie IS 'Koordinate des Grenzpunktes';
 COMMENT ON COLUMN agi_grundbuchplan_pub.grundbuchplan_grenzpunkt.mutation IS 'Grenzpunkt in Mutation (ja/nein)?';
+-- SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug
+CREATE TABLE agi_grundbuchplan_pub.grundbuchplan_grundbuchplanauszug (
+  T_Id bigint PRIMARY KEY DEFAULT nextval('agi_grundbuchplan_pub.t_ili2db_seq')
+  ,T_Ili_Tid uuid NULL DEFAULT uuid_generate_v4()
+  ,gem_bfs integer NOT NULL
+  ,geometrie geometry(MULTIPOLYGON,2056) NOT NULL
+  ,gemeinde varchar(255) NOT NULL
+  ,lieferdatum date NOT NULL
+  ,nfgeometer varchar(255) NOT NULL
+  ,anschrift varchar(1024) NOT NULL
+  ,kontakt varchar(1024) NOT NULL
+  ,gemeinde_name varchar(255) NOT NULL
+  ,grundbuch_name varchar(255) NOT NULL
+  ,firma varchar(255) NOT NULL
+  ,strasse_nummer varchar(255) NOT NULL
+  ,plz_ortschaft varchar(512) NOT NULL
+  ,tel varchar(255) NOT NULL
+  ,fax varchar(255) NULL
+  ,email varchar(255) NOT NULL
+  ,web varchar(255) NOT NULL
+)
+;
+CREATE INDEX grundbchpln_grndbchplnszug_geometrie_idx ON agi_grundbuchplan_pub.grundbuchplan_grundbuchplanauszug USING GIST ( geometrie );
+COMMENT ON TABLE agi_grundbuchplan_pub.grundbuchplan_grundbuchplanauszug IS 'Die Klasse wird für den "landreg_service" verwendet und beinhaltet Informationen, die auf dem Auszug für den Plan für das Grundbuch erscheinen müssen.';
 -- SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos
 CREATE TABLE agi_grundbuchplan_pub.grundbuchplan_grundstueckpos (
   T_Id bigint PRIMARY KEY DEFAULT nextval('agi_grundbuchplan_pub.t_ili2db_seq')
@@ -119,7 +159,7 @@ CREATE TABLE agi_grundbuchplan_pub.T_ILI2DB_MODEL (
   ,modelName text NOT NULL
   ,content text NOT NULL
   ,importDate timestamp NOT NULL
-  ,PRIMARY KEY (modelName,iliversion)
+  ,PRIMARY KEY (iliversion,modelName)
 )
 ;
 CREATE TABLE agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (
@@ -132,7 +172,7 @@ CREATE TABLE agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (
   ,SqlName varchar(1024) NOT NULL
   ,ColOwner varchar(1024) NOT NULL
   ,Target varchar(1024) NULL
-  ,PRIMARY KEY (ColOwner,SqlName)
+  ,PRIMARY KEY (SqlName,ColOwner)
 )
 ;
 CREATE TABLE agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (
@@ -155,9 +195,11 @@ CREATE TABLE agi_grundbuchplan_pub.T_ILI2DB_META_ATTRS (
   ,attr_value varchar(1024) NOT NULL
 )
 ;
+ALTER TABLE agi_grundbuchplan_pub.surfacestructure ADD CONSTRAINT surfacestructure_multisurface_surfaces_fkey FOREIGN KEY ( multisurface_surfaces ) REFERENCES agi_grundbuchplan_pub.multisurface DEFERRABLE INITIALLY DEFERRED;
 ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_bodenbedeckungsymbol ADD CONSTRAINT grundbchpln_nbdckngsymbol_rot_check CHECK( rot BETWEEN 0 AND 360);
 ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_bodenbedeckungsymbol ADD CONSTRAINT grundbchpln_nbdckngsymbol_bfs_nr_check CHECK( bfs_nr BETWEEN 0 AND 9999);
 ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_grenzpunkt ADD CONSTRAINT grundbuchplan_grenzpunkt_bfs_nr_check CHECK( bfs_nr BETWEEN 0 AND 9999);
+ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_grundbuchplanauszug ADD CONSTRAINT grundbchpln_rndbchplnszug_gem_bfs_check CHECK( gem_bfs BETWEEN 0 AND 9999);
 ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_grundstueckpos ADD CONSTRAINT grundbuchplan_grndstckpos_y_check CHECK( y BETWEEN 2000000 AND 3000000);
 ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_grundstueckpos ADD CONSTRAINT grundbuchplan_grndstckpos_x_check CHECK( x BETWEEN 1000000 AND 2000000);
 ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_grundstueckpos ADD CONSTRAINT grundbuchplan_grndstckpos_rot_check CHECK( rot BETWEEN -270 AND 90);
@@ -168,86 +210,132 @@ ALTER TABLE agi_grundbuchplan_pub.grundbuchplan_liegenschaft ADD CONSTRAINT grun
 ALTER TABLE agi_grundbuchplan_pub.T_ILI2DB_BASKET ADD CONSTRAINT T_ILI2DB_BASKET_dataset_fkey FOREIGN KEY ( dataset ) REFERENCES agi_grundbuchplan_pub.T_ILI2DB_DATASET DEFERRABLE INITIALLY DEFERRED;
 CREATE UNIQUE INDEX T_ILI2DB_DATASET_datasetName_key ON agi_grundbuchplan_pub.T_ILI2DB_DATASET (datasetName)
 ;
-CREATE UNIQUE INDEX T_ILI2DB_MODEL_modelName_iliversion_key ON agi_grundbuchplan_pub.T_ILI2DB_MODEL (modelName,iliversion)
+CREATE UNIQUE INDEX T_ILI2DB_MODEL_iliversion_modelName_key ON agi_grundbuchplan_pub.T_ILI2DB_MODEL (iliversion,modelName)
 ;
-CREATE UNIQUE INDEX T_ILI2DB_ATTRNAME_ColOwner_SqlName_key ON agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (ColOwner,SqlName)
+CREATE UNIQUE INDEX T_ILI2DB_ATTRNAME_SqlName_ColOwner_key ON agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (SqlName,ColOwner)
 ;
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (IliName,SqlName) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos','grundbuchplan_grundstueckpos');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (IliName,SqlName) VALUES ('GeometryCHLV95_V1.MultiSurface','multisurface');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (IliName,SqlName) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug','grundbuchplan_grundbuchplanauszug');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (IliName,SqlName) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol','grundbuchplan_bodenbedeckungsymbol');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (IliName,SqlName) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt','grundbuchplan_grenzpunkt');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (IliName,SqlName) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft','grundbuchplan_liegenschaft');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_CLASSNAME (IliName,SqlName) VALUES ('GeometryCHLV95_V1.SurfaceStructure','surfacestructure');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('GeometryCHLV95_V1.MultiSurface.Surfaces','multisurface_surfaces','surfacestructure','multisurface');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.gem_bfs','gem_bfs','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Vali_Txt','vali_txt','grundbuchplan_grundstueckpos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.strasse_nummer','strasse_nummer','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.BFS_Nr','bfs_nr','grundbuchplan_grundstueckpos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.grundbuch_name','grundbuch_name','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft.Flaechenmass','flaechenmass','grundbuchplan_liegenschaft',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol.BFS_Nr','bfs_nr','grundbuchplan_bodenbedeckungsymbol',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Hali_Txt','hali_txt','grundbuchplan_grundstueckpos',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt.Gueltigkeit','gueltigkeit','grundbuchplan_grenzpunkt',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Y','y','grundbuchplan_grundstueckpos',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.X','x','grundbuchplan_grundstueckpos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('GeometryCHLV95_V1.SurfaceStructure.Surface','surface','surfacestructure',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.lieferdatum','lieferdatum','grundbuchplan_grundbuchplanauszug',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.kontakt','kontakt','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft.BFS_Nr','bfs_nr','grundbuchplan_liegenschaft',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.plz_ortschaft','plz_ortschaft','grundbuchplan_grundbuchplanauszug',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.firma','firma','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft.Numpos','numpos','grundbuchplan_liegenschaft',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Hilfslinie','hilfslinie','grundbuchplan_grundstueckpos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.tel','tel','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Rot','rot','grundbuchplan_grundstueckpos',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt.BFS_Nr','bfs_nr','grundbuchplan_grenzpunkt',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol.Rot','rot','grundbuchplan_bodenbedeckungsymbol',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.web','web','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft.Geometrie','geometrie','grundbuchplan_liegenschaft',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt.Punktzeichen','punktzeichen','grundbuchplan_grenzpunkt',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.fax','fax','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft.Mutation','mutation','grundbuchplan_liegenschaft',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Mutation','mutation','grundbuchplan_grundstueckpos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.email','email','grundbuchplan_grundbuchplanauszug',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.gemeinde_name','gemeinde_name','grundbuchplan_grundbuchplanauszug',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.geometrie','geometrie','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Groesse_Txt','groesse_txt','grundbuchplan_grundstueckpos',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Nummer','nummer','grundbuchplan_grundstueckpos',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt.Mutation','mutation','grundbuchplan_grenzpunkt',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.gemeinde','gemeinde','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft.Nummer','nummer','grundbuchplan_liegenschaft',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol.Pos','pos','grundbuchplan_bodenbedeckungsymbol',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol.Art_Txt','art_txt','grundbuchplan_bodenbedeckungsymbol',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.anschrift','anschrift','grundbuchplan_grundbuchplanauszug',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.nfgeometer','nfgeometer','grundbuchplan_grundbuchplanauszug',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Art','art','grundbuchplan_grundstueckpos',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt.Geometrie','geometrie','grundbuchplan_grenzpunkt',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos.Pos','pos','grundbuchplan_grundstueckpos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug.geometrie','ch.ehi.ili2db.multiSurfaceTrafo','coalesce');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos','ch.ehi.ili2db.inheritance','newClass');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('GeometryCHLV95_V1.MultiSurface','ch.ehi.ili2db.inheritance','newClass');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug','ch.ehi.ili2db.inheritance','newClass');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol','ch.ehi.ili2db.inheritance','newClass');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt','ch.ehi.ili2db.inheritance','newClass');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft','ch.ehi.ili2db.inheritance','newClass');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt',NULL);
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol',NULL);
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('GeometryCHLV95_V1.SurfaceStructure','ch.ehi.ili2db.inheritance','newClass');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Liegenschaft',NULL);
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grundbuchplanauszug',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.GrundstueckPos',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('GeometryCHLV95_V1.SurfaceStructure',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.BodenbedeckungSymbol',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('GeometryCHLV95_V1.MultiSurface',NULL);
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_Grundbuchplan_20190930.Grundbuchplan.Grenzpunkt',NULL);
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.geomType','LINESTRING');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'surface','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.srid','2056');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug',NULL,'geometrie','ch.ehi.ili2db.geomType','MULTIPOLYGON');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.c1Max','2870000.000');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'surface','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'surface','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'surface','ch.ehi.ili2db.c1Max','2870000.000');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'surface','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'surface','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'surface','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_liegenschaft',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundstueckpos',NULL,'hilfslinie','ch.ehi.ili2db.geomType','LINESTRING');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('surfacestructure',NULL,'multisurface_surfaces','ch.ehi.ili2db.foreignKey','multisurface');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('grundbuchplan_grundstueckpos','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('grundbuchplan_bodenbedeckungsymbol','ch.ehi.ili2db.tableKind','CLASS');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('surfacestructure','ch.ehi.ili2db.tableKind','STRUCTURE');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('multisurface','ch.ehi.ili2db.tableKind','STRUCTURE');
+INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('grundbuchplan_grundbuchplanauszug','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('grundbuchplan_grenzpunkt','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('grundbuchplan_liegenschaft','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CHBase_Part4_ADMINISTRATIVEUNITS_20110830.ili','2.3','CHAdminCodes_V1 AdministrativeUnits_V1{ CHAdminCodes_V1 InternationalCodes_V1 Dictionaries_V1 Localisation_V1 INTERLIS} AdministrativeUnitsCH_V1{ CHAdminCodes_V1 InternationalCodes_V1 LocalisationCH_V1 AdministrativeUnits_V1 INTERLIS}','/* ########################################################################
@@ -469,7 +557,7 @@ MODEL AdministrativeUnitsCH_V1 (en)
 END AdministrativeUnitsCH_V1.
 
 !! ########################################################################
-','2019-09-30 13:38:16.625');
+','2019-10-23 12:10:31.763');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('Units-20120220.ili','2.3','Units','!! File Units.ili Release 2012-02-20
 
 INTERLIS 2.3;
@@ -567,7 +655,7 @@ CONTRACTED TYPE MODEL Units (en) AT "http://www.interlis.ch/models"
 
 END Units.
 
-','2019-09-30 13:38:16.625');
+','2019-10-23 12:10:31.763');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CoordSys-20151124.ili','2.3','CoordSys','!! File CoordSys.ili Release 2015-11-24
 
 INTERLIS 2.3;
@@ -782,7 +870,7 @@ REFSYSTEM MODEL CoordSys (en) AT "http://www.interlis.ch/models"
 
 END CoordSys.
 
-','2019-09-30 13:38:16.625');
+','2019-10-23 12:10:31.763');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CHBase_Part2_LOCALISATION_20110830.ili','2.3','InternationalCodes_V1 Localisation_V1{ InternationalCodes_V1} LocalisationCH_V1{ InternationalCodes_V1 Localisation_V1} Dictionaries_V1{ InternationalCodes_V1} DictionariesCH_V1{ InternationalCodes_V1 Dictionaries_V1}','/* ########################################################################
    CHBASE - BASE MODULES OF THE SWISS FEDERATION FOR MINIMAL GEODATA MODELS
    ======
@@ -954,7 +1042,7 @@ MODEL DictionariesCH_V1 (en)
 END DictionariesCH_V1.
 
 !! ########################################################################
-','2019-09-30 13:38:16.625');
+','2019-10-23 12:10:31.763');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('SO_AGI_Grundbuchplan_20190930.ili','2.3','SO_AGI_Grundbuchplan_20190930{ GeometryCHLV95_V1 CHAdminCodes_V1 Units}','INTERLIS 2.3;
 
 /** !!------------------------------------------------------------------------------ 
@@ -1004,6 +1092,27 @@ VERSION "2018-04-30"  =
        */
       Mutation : MANDATORY BOOLEAN;
     END Grenzpunkt;
+
+    /** Die Klasse wird für den "landreg_service" verwendet und beinhaltet Informationen, die auf dem Auszug für den Plan für das Grundbuch erscheinen müssen.
+     */
+    CLASS Grundbuchplanauszug =
+      gem_bfs : MANDATORY 0 .. 9999;
+      geometrie : MANDATORY GeometryCHLV95_V1.MultiSurface;
+      gemeinde : MANDATORY TEXT*255;
+      lieferdatum : MANDATORY INTERLIS.XMLDate;
+      nfgeometer : MANDATORY TEXT*255;
+      anschrift : MANDATORY TEXT*1024;
+      kontakt : MANDATORY TEXT*1024;
+      gemeinde_name : MANDATORY TEXT*255;
+      grundbuch_name : MANDATORY TEXT*255;
+      firma : MANDATORY TEXT*255;
+      strasse_nummer : MANDATORY TEXT*255;
+      plz_ortschaft : MANDATORY TEXT*512;
+      tel : MANDATORY TEXT*255;
+      fax : TEXT*255;
+      email : MANDATORY TEXT*255;
+      web : MANDATORY TEXT*255;
+    END Grundbuchplanauszug;
 
     CLASS GrundstueckPos =
       /** Position der Beschriftung
@@ -1066,7 +1175,7 @@ VERSION "2018-04-30"  =
   END Grundbuchplan;
 
 END SO_AGI_Grundbuchplan_20190930.
-','2019-09-30 13:38:16.625');
+','2019-10-23 12:10:31.763');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CHBase_Part1_GEOMETRY_20110830.ili','2.3','GeometryCHLV03_V1{ CoordSys Units INTERLIS} GeometryCHLV95_V1{ CoordSys Units INTERLIS}','/* ########################################################################
    CHBASE - BASE MODULES OF THE SWISS FEDERATION FOR MINIMAL GEODATA MODELS
    ======
@@ -1244,7 +1353,7 @@ TYPE MODEL GeometryCHLV95_V1 (en)
 END GeometryCHLV95_V1.
 
 !! ########################################################################
-','2019-09-30 13:38:16.625');
+','2019-10-23 12:10:31.763');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_SETTINGS (tag,setting) VALUES ('ch.ehi.ili2db.createMetaInfo','True');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_SETTINGS (tag,setting) VALUES ('ch.ehi.ili2db.beautifyEnumDispName','underscore');
 INSERT INTO agi_grundbuchplan_pub.T_ILI2DB_SETTINGS (tag,setting) VALUES ('ch.interlis.ili2c.ilidirs','.;http://models.geo.admin.ch');

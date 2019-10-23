@@ -48,6 +48,27 @@ VERSION "2018-04-30"  =
       Mutation : MANDATORY BOOLEAN;
     END Grenzpunkt;
 
+    /** Die Klasse wird für den "landreg_service" verwendet und beinhaltet Informationen, die auf dem Auszug für den Plan für das Grundbuch erscheinen müssen.
+     */
+    CLASS Grundbuchplanauszug =
+      gem_bfs : MANDATORY 0 .. 9999;
+      geometrie : MANDATORY GeometryCHLV95_V1.MultiSurface;
+      gemeinde : MANDATORY TEXT*255;
+      lieferdatum : MANDATORY INTERLIS.XMLDate;
+      nfgeometer : MANDATORY TEXT*255;
+      anschrift : MANDATORY TEXT*1024;
+      kontakt : MANDATORY TEXT*1024;
+      gemeinde_name : MANDATORY TEXT*255;
+      grundbuch_name : MANDATORY TEXT*255;
+      firma : MANDATORY TEXT*255;
+      strasse_nummer : MANDATORY TEXT*255;
+      plz_ortschaft : MANDATORY TEXT*512;
+      tel : MANDATORY TEXT*255;
+      fax : TEXT*255;
+      email : MANDATORY TEXT*255;
+      web : MANDATORY TEXT*255;
+    END Grundbuchplanauszug;
+
     CLASS GrundstueckPos =
       /** Position der Beschriftung
        */

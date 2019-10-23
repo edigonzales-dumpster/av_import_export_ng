@@ -91,7 +91,7 @@ Schema erstellen und Daten importieren:
 ./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_mopublic_pub/dev/ -b build-dev.gradle createSchemaPlzOrtschaft importPlzOrtschaftData
 ```
 
-#### Administrative Eineilungen
+#### Administrative Einteilungen (edit)
 Daten aus (produktiver) Edit-DB exportieren:
 ```
 ILI2PG_PATH=/Users/stefan/apps/ili2pg-3.11.3/ili2pg.jar  
@@ -119,10 +119,21 @@ DB-Schema anlegen und Daten importieren:
 
 Initialisieren der Pub-DB (erzeugen des neuen Grundbuchplans-Schemas):
 ```
-./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_grundbuchplan_pub/dev/ -b build-dev.gradle createSchemaGrundbuchplan
+./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_grundbuchplan_pub/dev/ -b build-dev.gradle createSchemaGrundbuchplan createSchemaAdminEinteilung importAdminEinteilung
 ```
 
 Ausführen des eigentlichen Umbau-Jobs:
 ```
 ./start-gretl.sh --docker-image sogis/gretl-runtime:latest --docker-network av_import_export_ng_avimportexport --job-directory $(pwd)/gretljobs/agi_grundbuchplan_pub/ -b build.gradle transferAgiGrundbuchplan
+```
+
+#### Administrative Einteilungen (pub)
+
+DDL für Schema erzeugen:
+```
+ILI2PG_PATH=/Users/stefan/apps/ili2pg-4.3.0/ili2pg-4.3.0.jar  
+java -jar ${ILI2PG_PATH} \
+--dbschema agi_av_gb_admin_einteilung_pub --models SO_AGI_AV_GB_Administrative_Einteilungen_Publikation_20180822 \
+--defaultSrsCode 2056 --createGeomIdx --createFk --createFkIdx --createEnumTabs --beautifyEnumDispName --createMetaInfo --createNumChecks --nameByTopic --strokeArcs \
+--createscript agi_av_gb_admin_einteilung_pub.sql
 ```
