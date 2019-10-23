@@ -6,11 +6,13 @@ WITH pos AS
         hali,
         vali,
         ori,
-        pos 
+        pos,
+        gemeinde.aname AS gemeinde
     FROM
-       agi_dm01avso24.nomenklatur_flurnamepos 
+       agi_dm01avso24.nomenklatur_flurnamepos AS pos
+       LEFT JOIN agi_dm01avso24.gemeindegrenzen_gemeinde AS gemeinde
+       ON gemeinde.bfsnr = CAST(pos.t_datasetname AS integer)
 )
-
 SELECT
     flurname.aname AS flurname,
     CAST(flurname.t_datasetname AS INT) AS bfs_nr,    
@@ -30,8 +32,9 @@ SELECT
         ELSE pos.vali
     END AS vali,
     aimport.importdate AS importdatum,
-    ST_CurveToLine(flurname.geometrie, 0.002, 1, 1) AS geometrie    ,
-    pos.pos
+    ST_CurveToLine(flurname.geometrie, 0.002, 1, 1) AS geometrie,
+    pos.pos,
+    pos.gemeinde AS gemeinde
 FROM
     pos 
     LEFT JOIN agi_dm01avso24.nomenklatur_flurname AS flurname
@@ -39,15 +42,15 @@ FROM
     LEFT JOIN agi_dm01avso24.nomenklatur_nknachfuehrung AS nachfuehrung
         ON flurname.entstehung = nachfuehrung.t_id
     LEFT JOIN agi_dm01avso24.t_ili2db_basket AS basket
-    	ON flurname.t_basket = basket.t_id
+        ON flurname.t_basket = basket.t_id
     LEFT JOIN 
     (
-    	SELECT
-			max(importdate) AS importdate, dataset
-		FROM
-			agi_dm01avso24.t_ili2db_import
-		GROUP BY
-			dataset 
+        SELECT
+            max(importdate) AS importdate, dataset
+        FROM
+            agi_dm01avso24.t_ili2db_import
+        GROUP BY
+            dataset 
     ) AS  aimport
-    	ON basket.dataset = aimport.dataset        
+        ON basket.dataset = aimport.dataset        
 ;

@@ -113,7 +113,7 @@ CREATE TABLE agi_mopublic_pub.mopublic_rohrleitung (
   T_Id bigint PRIMARY KEY DEFAULT nextval('agi_mopublic_pub.t_ili2db_seq')
   ,T_Ili_Tid uuid NULL DEFAULT uuid_generate_v4()
   ,geometrie geometry(LINESTRING,2056) NOT NULL
-  ,art varchar(100) NOT NULL
+  ,art_txt varchar(100) NOT NULL
   ,betreiber varchar(40) NOT NULL
   ,bfs_nr integer NOT NULL
   ,importdatum timestamp NOT NULL
@@ -122,7 +122,7 @@ CREATE TABLE agi_mopublic_pub.mopublic_rohrleitung (
 ;
 CREATE INDEX mopublic_rohrleitung_geometrie_idx ON agi_mopublic_pub.mopublic_rohrleitung USING GIST ( geometrie );
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_rohrleitung.geometrie IS 'Geometrie';
-COMMENT ON COLUMN agi_mopublic_pub.mopublic_rohrleitung.art IS 'Transportmedium (Integer-Repräsentation)';
+COMMENT ON COLUMN agi_mopublic_pub.mopublic_rohrleitung.art_txt IS 'Transportmedium (Text-Repräsentation)';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_rohrleitung.betreiber IS 'Betreiber';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_rohrleitung.bfs_nr IS 'Gemeindenummer (BfS-Nummer) der Gemeinde in welcher das Objekt liegt.';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_rohrleitung.importdatum IS 'Importdatum';
@@ -218,6 +218,7 @@ CREATE TABLE agi_mopublic_pub.mopublic_flurname (
   ,importdatum timestamp NOT NULL
   ,nachfuehrung date NULL
   ,orientierung decimal(5,2) NOT NULL
+  ,gemeinde varchar(255) NOT NULL
 )
 ;
 CREATE INDEX mopublic_flurname_geometrie_idx ON agi_mopublic_pub.mopublic_flurname USING GIST ( geometrie );
@@ -231,6 +232,7 @@ COMMENT ON COLUMN agi_mopublic_pub.mopublic_flurname.vali IS 'VAlignment';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_flurname.importdatum IS 'Importdatum';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_flurname.nachfuehrung IS 'Datum der Nachführung durch Geometer';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_flurname.orientierung IS 'Textorientierung';
+COMMENT ON COLUMN agi_mopublic_pub.mopublic_flurname.gemeinde IS 'Name der Gemeinde';
 -- SO_AGI_MOpublic_20190424.MOpublic.Gebaeudeadresse
 CREATE TABLE agi_mopublic_pub.mopublic_gebaeudeadresse (
   T_Id bigint PRIMARY KEY DEFAULT nextval('agi_mopublic_pub.t_ili2db_seq')
@@ -287,6 +289,7 @@ CREATE TABLE agi_mopublic_pub.mopublic_gelaendename (
   ,vali varchar(255) NOT NULL
   ,importdatum timestamp NOT NULL
   ,nachfuehrung date NULL
+  ,gemeinde varchar(255) NOT NULL
 )
 ;
 CREATE INDEX mopublic_gelaendename_pos_idx ON agi_mopublic_pub.mopublic_gelaendename USING GIST ( pos );
@@ -298,6 +301,7 @@ COMMENT ON COLUMN agi_mopublic_pub.mopublic_gelaendename.hali IS 'HAlignment';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_gelaendename.vali IS 'VAlignment';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_gelaendename.importdatum IS 'Importdatum';
 COMMENT ON COLUMN agi_mopublic_pub.mopublic_gelaendename.nachfuehrung IS 'Datum der Nachführung durch Geometer';
+COMMENT ON COLUMN agi_mopublic_pub.mopublic_gelaendename.gemeinde IS 'Name der Gemeinde';
 -- SO_AGI_MOpublic_20190424.MOpublic.Grenzpunkt
 CREATE TABLE agi_mopublic_pub.mopublic_grenzpunkt (
   T_Id bigint PRIMARY KEY DEFAULT nextval('agi_mopublic_pub.t_ili2db_seq')
@@ -548,7 +552,7 @@ CREATE TABLE agi_mopublic_pub.T_ILI2DB_MODEL (
   ,modelName text NOT NULL
   ,content text NOT NULL
   ,importDate timestamp NOT NULL
-  ,PRIMARY KEY (modelName,iliversion)
+  ,PRIMARY KEY (iliversion,modelName)
 )
 ;
 CREATE TABLE agi_mopublic_pub.valignment (
@@ -569,7 +573,7 @@ CREATE TABLE agi_mopublic_pub.mopublic_objektname_pos_herkunft (
   ,description varchar(1024) NULL
 )
 ;
-CREATE TABLE agi_mopublic_pub.mopublic_grenzpunkt_gueltigkeit (
+CREATE TABLE agi_mopublic_pub.halignment (
   itfCode integer PRIMARY KEY
   ,iliCode varchar(1024) NOT NULL
   ,seq integer NULL
@@ -578,7 +582,7 @@ CREATE TABLE agi_mopublic_pub.mopublic_grenzpunkt_gueltigkeit (
   ,description varchar(1024) NULL
 )
 ;
-CREATE TABLE agi_mopublic_pub.halignment (
+CREATE TABLE agi_mopublic_pub.mopublic_grenzpunkt_gueltigkeit (
   itfCode integer PRIMARY KEY
   ,iliCode varchar(1024) NOT NULL
   ,seq integer NULL
@@ -670,7 +674,7 @@ ALTER TABLE agi_mopublic_pub.mopublic_strassenname_pos ADD CONSTRAINT mopublic_s
 ALTER TABLE agi_mopublic_pub.T_ILI2DB_BASKET ADD CONSTRAINT T_ILI2DB_BASKET_dataset_fkey FOREIGN KEY ( dataset ) REFERENCES agi_mopublic_pub.T_ILI2DB_DATASET DEFERRABLE INITIALLY DEFERRED;
 CREATE UNIQUE INDEX T_ILI2DB_DATASET_datasetName_key ON agi_mopublic_pub.T_ILI2DB_DATASET (datasetName)
 ;
-CREATE UNIQUE INDEX T_ILI2DB_MODEL_modelName_iliversion_key ON agi_mopublic_pub.T_ILI2DB_MODEL (modelName,iliversion)
+CREATE UNIQUE INDEX T_ILI2DB_MODEL_iliversion_modelName_key ON agi_mopublic_pub.T_ILI2DB_MODEL (iliversion,modelName)
 ;
 CREATE UNIQUE INDEX T_ILI2DB_ATTRNAME_SqlName_ColOwner_key ON agi_mopublic_pub.T_ILI2DB_ATTRNAME (SqlName,ColOwner)
 ;
@@ -726,7 +730,6 @@ INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target)
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Flurname.Orientierung','orientierung','mopublic_flurname',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck.Nummer','nummer','mopublic_grundstueck',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung_proj.BFS_Nr','bfs_nr','mopublic_bodenbedeckung_proj',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Rohrleitung.Art','art','mopublic_rohrleitung',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck_proj.Nummer','nummer','mopublic_grundstueck_proj',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung.Geometrie','geometrie','mopublic_bodenbedeckung',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gelaendename.Orientierung','orientierung','mopublic_gelaendename',NULL);
@@ -748,6 +751,7 @@ INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target)
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gebaeudeadresse.BFS_Nr','bfs_nr','mopublic_gebaeudeadresse',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung_proj.Geometrie','geometrie','mopublic_bodenbedeckung_proj',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grenzpunkt.Symbolorientierung','symbolorientierung','mopublic_grenzpunkt',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gelaendename.Gemeinde','gemeinde','mopublic_gelaendename',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grenzpunkt.Lagegenauigkeit','lagegenauigkeit','mopublic_grenzpunkt',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grenzpunkt.Importdatum','importdatum','mopublic_grenzpunkt',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Fixpunkt.Nummer','nummer','mopublic_fixpunkt',NULL);
@@ -852,6 +856,7 @@ INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target)
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Einzelobjekt_Punkt.Art_txt','art_txt','mopublic_einzelobjekt_punkt',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Ortsname.Orientierung','orientierung','mopublic_ortsname',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung.Importdatum','importdatum','mopublic_bodenbedeckung',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Flurname.Gemeinde','gemeinde','mopublic_flurname',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck_proj.Importdatum','importdatum','mopublic_grundstueck_proj',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck.BFS_Nr','bfs_nr','mopublic_grundstueck',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung_proj.Nachfuehrung','nachfuehrung','mopublic_bodenbedeckung_proj',NULL);
@@ -864,6 +869,7 @@ INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target)
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Ortsname.Importdatum','importdatum','mopublic_ortsname',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gebaeudeadresse.Strassenname','strassenname','mopublic_gebaeudeadresse',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grenzpunkt.Gueltigkeit','gueltigkeit','mopublic_grenzpunkt',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Rohrleitung.Art_txt','art_txt','mopublic_rohrleitung',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Strassenname_Pos.Nachfuehrung','nachfuehrung','mopublic_strassenname_pos',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck_proj.EGRID','egrid','mopublic_grundstueck_proj',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_ATTRNAME (IliName,SqlName,ColOwner,Target) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gebaeudeadresse.VAli','vali','mopublic_gebaeudeadresse',NULL);
@@ -900,26 +906,26 @@ INSERT INTO agi_mopublic_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AG
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gemeindegrenze_proj','ch.ehi.ili2db.inheritance','newClass');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung_proj','ch.ehi.ili2db.inheritance','newClass');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TRAFO (iliname,tag,setting) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gemeindegrenze','ch.ehi.ili2db.inheritance','newClass');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung_proj',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck_proj',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gelaendename',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Strassenachse',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grenzpunkt',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Hoheitsgrenzpunkt',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Einzelobjekt_Linie',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gebaeudeadresse',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gemeindegrenze_proj',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck_proj',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Objektname_Pos',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gemeindegrenze',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Rohrleitung',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Strassenname_Pos',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung_proj',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Hoheitsgrenzpunkt',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gemeindegrenze',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grenzpunkt',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Ortsname',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gelaendename',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Bodenbedeckung',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Einzelobjekt_Flaeche',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Fixpunkt',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Grundstueck',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Ortsname',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Einzelobjekt_Punkt',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Einzelobjekt_Linie',NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Flurname',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Rohrleitung',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gemeindegrenze_proj',NULL);
-INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Gebaeudeadresse',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Fixpunkt',NULL);
+INSERT INTO agi_mopublic_pub.T_ILI2DB_INHERITANCE (thisClass,baseClass) VALUES ('SO_AGI_MOpublic_20190424.MOpublic.Einzelobjekt_Punkt',NULL);
 INSERT INTO agi_mopublic_pub.valignment (seq,iliCode,itfCode,dispName,inactive,description) VALUES (0,'Top',0,'Top',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.valignment (seq,iliCode,itfCode,dispName,inactive,description) VALUES (1,'Cap',1,'Cap',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.valignment (seq,iliCode,itfCode,dispName,inactive,description) VALUES (2,'Half',2,'Half',FALSE,NULL);
@@ -929,226 +935,226 @@ INSERT INTO agi_mopublic_pub.mopublic_objektname_pos_herkunft (seq,iliCode,itfCo
 INSERT INTO agi_mopublic_pub.mopublic_objektname_pos_herkunft (seq,iliCode,itfCode,dispName,inactive,description) VALUES (NULL,'EO_Linie',1,'EO Linie',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.mopublic_objektname_pos_herkunft (seq,iliCode,itfCode,dispName,inactive,description) VALUES (NULL,'EO_Flaeche',2,'EO Flaeche',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.mopublic_objektname_pos_herkunft (seq,iliCode,itfCode,dispName,inactive,description) VALUES (NULL,'BB',3,'BB',FALSE,NULL);
-INSERT INTO agi_mopublic_pub.mopublic_grenzpunkt_gueltigkeit (seq,iliCode,itfCode,dispName,inactive,description) VALUES (NULL,'projektiert',0,'projektiert',FALSE,NULL);
-INSERT INTO agi_mopublic_pub.mopublic_grenzpunkt_gueltigkeit (seq,iliCode,itfCode,dispName,inactive,description) VALUES (NULL,'gueltig',1,'gueltig',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.halignment (seq,iliCode,itfCode,dispName,inactive,description) VALUES (0,'Left',0,'Left',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.halignment (seq,iliCode,itfCode,dispName,inactive,description) VALUES (1,'Center',1,'Center',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.halignment (seq,iliCode,itfCode,dispName,inactive,description) VALUES (2,'Right',2,'Right',FALSE,NULL);
+INSERT INTO agi_mopublic_pub.mopublic_grenzpunkt_gueltigkeit (seq,iliCode,itfCode,dispName,inactive,description) VALUES (NULL,'projektiert',0,'projektiert',FALSE,NULL);
+INSERT INTO agi_mopublic_pub.mopublic_grenzpunkt_gueltigkeit (seq,iliCode,itfCode,dispName,inactive,description) VALUES (NULL,'gueltig',1,'gueltig',FALSE,NULL);
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'symbolorientierung','ch.ehi.ili2db.unit','Angle_Degree');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'symbolorientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'lagegenauigkeit','ch.ehi.ili2db.unit','cm');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'symbolorientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'lagegenauigkeit','ch.ehi.ili2db.unit','cm');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'hoehengenauigkeit','ch.ehi.ili2db.unit','cm');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'symbolorientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'symbolorientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'hoehengenauigkeit','ch.ehi.ili2db.unit','cm');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'lagegenauigkeit','ch.ehi.ili2db.unit','cm');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'hoehe','ch.ehi.ili2db.unit','M');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.srid','2056');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'lagegenauigkeit','ch.ehi.ili2db.unit','cm');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grenzpunkt',NULL,'symbolorientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenname_pos',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'orientierung','ch.ehi.ili2db.unit','Angle_Degree');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gelaendename',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.geomType','POLYGON');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_objektname_pos',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'hoehe','ch.ehi.ili2db.unit','M');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gemeindegrenze_proj',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.srid','2056');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'lage','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'pos','ch.ehi.ili2db.srid','2056');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_rohrleitung',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_hoheitsgrenzpunkt',NULL,'pos','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_ortsname',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_punkt',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche',NULL,'geometrie','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_flurname',NULL,'pos','ch.ehi.ili2db.geomType','POINT');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'pos','ch.ehi.ili2db.c1Max','2870000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_gebaeudeadresse',NULL,'pos','ch.ehi.ili2db.c1Min','2460000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_einzelobjekt_linie',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_bodenbedeckung_proj',NULL,'geometrie','ch.ehi.ili2db.coordDimension','2');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_strassenachse',NULL,'geometrie','ch.ehi.ili2db.geomType','LINESTRING');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_grundstueck_proj',NULL,'geometrie','ch.ehi.ili2db.c2Max','1310000.000');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'lagegenauigkeit','ch.ehi.ili2db.unit','cm');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_COLUMN_PROP (tablename,subtype,columnname,tag,setting) VALUES ('mopublic_fixpunkt',NULL,'geometrie','ch.ehi.ili2db.c2Min','1045000.000');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_grenzpunkt','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_einzelobjekt_punkt','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_strassenachse','ch.ehi.ili2db.tableKind','CLASS');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_ortsname','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_gemeindegrenze_proj','ch.ehi.ili2db.tableKind','CLASS');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_ortsname','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_objektname_pos','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_einzelobjekt_linie','ch.ehi.ili2db.tableKind','CLASS');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_bodenbedeckung','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_bodenbedeckung_proj','ch.ehi.ili2db.tableKind','CLASS');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_bodenbedeckung','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_grundstueck_proj','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_gebaeudeadresse','ch.ehi.ili2db.tableKind','CLASS');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_TABLE_PROP (tablename,tag,setting) VALUES ('mopublic_einzelobjekt_flaeche','ch.ehi.ili2db.tableKind','CLASS');
@@ -1383,7 +1389,7 @@ MODEL AdministrativeUnitsCH_V1 (en)
 END AdministrativeUnitsCH_V1.
 
 !! ########################################################################
-','2019-09-30 09:21:13.459');
+','2019-10-23 10:46:02.725');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('Units-20120220.ili','2.3','Units','!! File Units.ili Release 2012-02-20
 
 INTERLIS 2.3;
@@ -1481,7 +1487,179 @@ CONTRACTED TYPE MODEL Units (en) AT "http://www.interlis.ch/models"
 
 END Units.
 
-','2019-09-30 09:21:13.459');
+','2019-10-23 10:46:02.725');
+INSERT INTO agi_mopublic_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CHBase_Part2_LOCALISATION_20110830.ili','2.3','InternationalCodes_V1 Localisation_V1{ InternationalCodes_V1} LocalisationCH_V1{ InternationalCodes_V1 Localisation_V1} Dictionaries_V1{ InternationalCodes_V1} DictionariesCH_V1{ InternationalCodes_V1 Dictionaries_V1}','/* ########################################################################
+   CHBASE - BASE MODULES OF THE SWISS FEDERATION FOR MINIMAL GEODATA MODELS
+   ======
+   BASISMODULE DES BUNDES           MODULES DE BASE DE LA CONFEDERATION
+   FÜR MINIMALE GEODATENMODELLE     POUR LES MODELES DE GEODONNEES MINIMAUX
+   
+   PROVIDER: GKG/KOGIS - GCS/COSIG             CONTACT: models@geo.admin.ch
+   PUBLISHED: 2011-08-30
+   ########################################################################
+*/
+
+INTERLIS 2.3;
+
+/* ########################################################################
+   ########################################################################
+   PART II -- LOCALISATION
+   - Package InternationalCodes
+   - Packages Localisation, LocalisationCH
+   - Packages Dictionaries, DictionariesCH
+*/
+
+!! ########################################################################
+!!@technicalContact=models@geo.admin.ch
+!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
+TYPE MODEL InternationalCodes_V1 (en)
+  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
+
+  DOMAIN
+    LanguageCode_ISO639_1 = (de,fr,it,rm,en,
+      aa,ab,af,am,ar,as,ay,az,ba,be,bg,bh,bi,bn,bo,br,ca,co,cs,cy,da,dz,el,
+      eo,es,et,eu,fa,fi,fj,fo,fy,ga,gd,gl,gn,gu,ha,he,hi,hr,hu,hy,ia,id,ie,
+      ik,is,iu,ja,jw,ka,kk,kl,km,kn,ko,ks,ku,ky,la,ln,lo,lt,lv,mg,mi,mk,ml,
+      mn,mo,mr,ms,mt,my,na,ne,nl,no,oc,om,or,pa,pl,ps,pt,qu,rn,ro,ru,rw,sa,
+      sd,sg,sh,si,sk,sl,sm,sn,so,sq,sr,ss,st,su,sv,sw,ta,te,tg,th,ti,tk,tl,
+      tn,to,tr,ts,tt,tw,ug,uk,ur,uz,vi,vo,wo,xh,yi,yo,za,zh,zu);
+
+    CountryCode_ISO3166_1 = (CHE,
+      ABW,AFG,AGO,AIA,ALA,ALB,AND_,ANT,ARE,ARG,ARM,ASM,ATA,ATF,ATG,AUS,
+      AUT,AZE,BDI,BEL,BEN,BFA,BGD,BGR,BHR,BHS,BIH,BLR,BLZ,BMU,BOL,BRA,
+      BRB,BRN,BTN,BVT,BWA,CAF,CAN,CCK,CHL,CHN,CIV,CMR,COD,COG,COK,COL,
+      COM,CPV,CRI,CUB,CXR,CYM,CYP,CZE,DEU,DJI,DMA,DNK,DOM,DZA,ECU,EGY,
+      ERI,ESH,ESP,EST,ETH,FIN,FJI,FLK,FRA,FRO,FSM,GAB,GBR,GEO,GGY,GHA,
+      GIB,GIN,GLP,GMB,GNB,GNQ,GRC,GRD,GRL,GTM,GUF,GUM,GUY,HKG,HMD,HND,
+      HRV,HTI,HUN,IDN,IMN,IND,IOT,IRL,IRN,IRQ,ISL,ISR,ITA,JAM,JEY,JOR,
+      JPN,KAZ,KEN,KGZ,KHM,KIR,KNA,KOR,KWT,LAO,LBN,LBR,LBY,LCA,LIE,LKA,
+      LSO,LTU,LUX,LVA,MAC,MAR,MCO,MDA,MDG,MDV,MEX,MHL,MKD,MLI,MLT,MMR,
+      MNE,MNG,MNP,MOZ,MRT,MSR,MTQ,MUS,MWI,MYS,MYT,NAM,NCL,NER,NFK,NGA,
+      NIC,NIU,NLD,NOR,NPL,NRU,NZL,OMN,PAK,PAN,PCN,PER,PHL,PLW,PNG,POL,
+      PRI,PRK,PRT,PRY,PSE,PYF,QAT,REU,ROU,RUS,RWA,SAU,SDN,SEN,SGP,SGS,
+      SHN,SJM,SLB,SLE,SLV,SMR,SOM,SPM,SRB,STP,SUR,SVK,SVN,SWE,SWZ,SYC,
+      SYR,TCA,TCD,TGO,THA,TJK,TKL,TKM,TLS,TON,TTO,TUN,TUR,TUV,TWN,TZA,
+      UGA,UKR,UMI,URY,USA,UZB,VAT,VCT,VEN,VGB,VIR,VNM,VUT,WLF,WSM,YEM,
+      ZAF,ZMB,ZWE);
+
+END InternationalCodes_V1.
+
+!! ########################################################################
+!!@technicalContact=models@geo.admin.ch
+!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
+TYPE MODEL Localisation_V1 (en)
+  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
+
+  IMPORTS UNQUALIFIED InternationalCodes_V1;
+
+  STRUCTURE LocalisedText =
+    Language: LanguageCode_ISO639_1;
+    Text: MANDATORY TEXT;
+  END LocalisedText;
+  
+  STRUCTURE LocalisedMText =
+    Language: LanguageCode_ISO639_1;
+    Text: MANDATORY MTEXT;
+  END LocalisedMText;
+
+  STRUCTURE MultilingualText =
+    LocalisedText : BAG {1..*} OF LocalisedText;
+    UNIQUE (LOCAL) LocalisedText:Language;
+  END MultilingualText;  
+  
+  STRUCTURE MultilingualMText =
+    LocalisedText : BAG {1..*} OF LocalisedMText;
+    UNIQUE (LOCAL) LocalisedText:Language;
+  END MultilingualMText;
+
+END Localisation_V1.
+
+!! ########################################################################
+!!@technicalContact=models@geo.admin.ch
+!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
+TYPE MODEL LocalisationCH_V1 (en)
+  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
+
+  IMPORTS UNQUALIFIED InternationalCodes_V1;
+  IMPORTS Localisation_V1;
+
+  STRUCTURE LocalisedText EXTENDS Localisation_V1.LocalisedText =
+  MANDATORY CONSTRAINT
+    Language == #de OR
+    Language == #fr OR
+    Language == #it OR
+    Language == #rm OR
+    Language == #en;
+  END LocalisedText;
+  
+  STRUCTURE LocalisedMText EXTENDS Localisation_V1.LocalisedMText =
+  MANDATORY CONSTRAINT
+    Language == #de OR
+    Language == #fr OR
+    Language == #it OR
+    Language == #rm OR
+    Language == #en;
+  END LocalisedMText;
+
+  STRUCTURE MultilingualText EXTENDS Localisation_V1.MultilingualText =
+    LocalisedText(EXTENDED) : BAG {1..*} OF LocalisedText;
+  END MultilingualText;  
+  
+  STRUCTURE MultilingualMText EXTENDS Localisation_V1.MultilingualMText =
+    LocalisedText(EXTENDED) : BAG {1..*} OF LocalisedMText;
+  END MultilingualMText;
+
+END LocalisationCH_V1.
+
+!! ########################################################################
+!!@technicalContact=models@geo.admin.ch
+!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
+MODEL Dictionaries_V1 (en)
+  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
+
+  IMPORTS UNQUALIFIED InternationalCodes_V1;
+
+  TOPIC Dictionaries (ABSTRACT) =
+
+    STRUCTURE Entry (ABSTRACT) =
+      Text: MANDATORY TEXT;
+    END Entry;
+      
+    CLASS Dictionary =
+      Language: MANDATORY LanguageCode_ISO639_1;
+      Entries: LIST OF Entry;
+    END Dictionary;
+
+  END Dictionaries;
+
+END Dictionaries_V1.
+
+!! ########################################################################
+!!@technicalContact=models@geo.admin.ch
+!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
+MODEL DictionariesCH_V1 (en)
+  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
+
+  IMPORTS UNQUALIFIED InternationalCodes_V1;
+  IMPORTS Dictionaries_V1;
+
+  TOPIC Dictionaries (ABSTRACT) EXTENDS Dictionaries_V1.Dictionaries =
+
+    CLASS Dictionary (EXTENDED) =
+    MANDATORY CONSTRAINT
+      Language == #de OR
+      Language == #fr OR
+      Language == #it OR
+      Language == #rm OR
+      Language == #en;
+    END Dictionary;
+
+  END Dictionaries;
+
+END DictionariesCH_V1.
+
+!! ########################################################################
+','2019-10-23 10:46:02.725');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CoordSys-20151124.ili','2.3','CoordSys','!! File CoordSys.ili Release 2015-11-24
 
 INTERLIS 2.3;
@@ -1696,179 +1874,7 @@ REFSYSTEM MODEL CoordSys (en) AT "http://www.interlis.ch/models"
 
 END CoordSys.
 
-','2019-09-30 09:21:13.459');
-INSERT INTO agi_mopublic_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CHBase_Part2_LOCALISATION_20110830.ili','2.3','InternationalCodes_V1 Localisation_V1{ InternationalCodes_V1} LocalisationCH_V1{ InternationalCodes_V1 Localisation_V1} Dictionaries_V1{ InternationalCodes_V1} DictionariesCH_V1{ InternationalCodes_V1 Dictionaries_V1}','/* ########################################################################
-   CHBASE - BASE MODULES OF THE SWISS FEDERATION FOR MINIMAL GEODATA MODELS
-   ======
-   BASISMODULE DES BUNDES           MODULES DE BASE DE LA CONFEDERATION
-   FÜR MINIMALE GEODATENMODELLE     POUR LES MODELES DE GEODONNEES MINIMAUX
-   
-   PROVIDER: GKG/KOGIS - GCS/COSIG             CONTACT: models@geo.admin.ch
-   PUBLISHED: 2011-08-30
-   ########################################################################
-*/
-
-INTERLIS 2.3;
-
-/* ########################################################################
-   ########################################################################
-   PART II -- LOCALISATION
-   - Package InternationalCodes
-   - Packages Localisation, LocalisationCH
-   - Packages Dictionaries, DictionariesCH
-*/
-
-!! ########################################################################
-!!@technicalContact=models@geo.admin.ch
-!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
-TYPE MODEL InternationalCodes_V1 (en)
-  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
-
-  DOMAIN
-    LanguageCode_ISO639_1 = (de,fr,it,rm,en,
-      aa,ab,af,am,ar,as,ay,az,ba,be,bg,bh,bi,bn,bo,br,ca,co,cs,cy,da,dz,el,
-      eo,es,et,eu,fa,fi,fj,fo,fy,ga,gd,gl,gn,gu,ha,he,hi,hr,hu,hy,ia,id,ie,
-      ik,is,iu,ja,jw,ka,kk,kl,km,kn,ko,ks,ku,ky,la,ln,lo,lt,lv,mg,mi,mk,ml,
-      mn,mo,mr,ms,mt,my,na,ne,nl,no,oc,om,or,pa,pl,ps,pt,qu,rn,ro,ru,rw,sa,
-      sd,sg,sh,si,sk,sl,sm,sn,so,sq,sr,ss,st,su,sv,sw,ta,te,tg,th,ti,tk,tl,
-      tn,to,tr,ts,tt,tw,ug,uk,ur,uz,vi,vo,wo,xh,yi,yo,za,zh,zu);
-
-    CountryCode_ISO3166_1 = (CHE,
-      ABW,AFG,AGO,AIA,ALA,ALB,AND_,ANT,ARE,ARG,ARM,ASM,ATA,ATF,ATG,AUS,
-      AUT,AZE,BDI,BEL,BEN,BFA,BGD,BGR,BHR,BHS,BIH,BLR,BLZ,BMU,BOL,BRA,
-      BRB,BRN,BTN,BVT,BWA,CAF,CAN,CCK,CHL,CHN,CIV,CMR,COD,COG,COK,COL,
-      COM,CPV,CRI,CUB,CXR,CYM,CYP,CZE,DEU,DJI,DMA,DNK,DOM,DZA,ECU,EGY,
-      ERI,ESH,ESP,EST,ETH,FIN,FJI,FLK,FRA,FRO,FSM,GAB,GBR,GEO,GGY,GHA,
-      GIB,GIN,GLP,GMB,GNB,GNQ,GRC,GRD,GRL,GTM,GUF,GUM,GUY,HKG,HMD,HND,
-      HRV,HTI,HUN,IDN,IMN,IND,IOT,IRL,IRN,IRQ,ISL,ISR,ITA,JAM,JEY,JOR,
-      JPN,KAZ,KEN,KGZ,KHM,KIR,KNA,KOR,KWT,LAO,LBN,LBR,LBY,LCA,LIE,LKA,
-      LSO,LTU,LUX,LVA,MAC,MAR,MCO,MDA,MDG,MDV,MEX,MHL,MKD,MLI,MLT,MMR,
-      MNE,MNG,MNP,MOZ,MRT,MSR,MTQ,MUS,MWI,MYS,MYT,NAM,NCL,NER,NFK,NGA,
-      NIC,NIU,NLD,NOR,NPL,NRU,NZL,OMN,PAK,PAN,PCN,PER,PHL,PLW,PNG,POL,
-      PRI,PRK,PRT,PRY,PSE,PYF,QAT,REU,ROU,RUS,RWA,SAU,SDN,SEN,SGP,SGS,
-      SHN,SJM,SLB,SLE,SLV,SMR,SOM,SPM,SRB,STP,SUR,SVK,SVN,SWE,SWZ,SYC,
-      SYR,TCA,TCD,TGO,THA,TJK,TKL,TKM,TLS,TON,TTO,TUN,TUR,TUV,TWN,TZA,
-      UGA,UKR,UMI,URY,USA,UZB,VAT,VCT,VEN,VGB,VIR,VNM,VUT,WLF,WSM,YEM,
-      ZAF,ZMB,ZWE);
-
-END InternationalCodes_V1.
-
-!! ########################################################################
-!!@technicalContact=models@geo.admin.ch
-!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
-TYPE MODEL Localisation_V1 (en)
-  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
-
-  IMPORTS UNQUALIFIED InternationalCodes_V1;
-
-  STRUCTURE LocalisedText =
-    Language: LanguageCode_ISO639_1;
-    Text: MANDATORY TEXT;
-  END LocalisedText;
-  
-  STRUCTURE LocalisedMText =
-    Language: LanguageCode_ISO639_1;
-    Text: MANDATORY MTEXT;
-  END LocalisedMText;
-
-  STRUCTURE MultilingualText =
-    LocalisedText : BAG {1..*} OF LocalisedText;
-    UNIQUE (LOCAL) LocalisedText:Language;
-  END MultilingualText;  
-  
-  STRUCTURE MultilingualMText =
-    LocalisedText : BAG {1..*} OF LocalisedMText;
-    UNIQUE (LOCAL) LocalisedText:Language;
-  END MultilingualMText;
-
-END Localisation_V1.
-
-!! ########################################################################
-!!@technicalContact=models@geo.admin.ch
-!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
-TYPE MODEL LocalisationCH_V1 (en)
-  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
-
-  IMPORTS UNQUALIFIED InternationalCodes_V1;
-  IMPORTS Localisation_V1;
-
-  STRUCTURE LocalisedText EXTENDS Localisation_V1.LocalisedText =
-  MANDATORY CONSTRAINT
-    Language == #de OR
-    Language == #fr OR
-    Language == #it OR
-    Language == #rm OR
-    Language == #en;
-  END LocalisedText;
-  
-  STRUCTURE LocalisedMText EXTENDS Localisation_V1.LocalisedMText =
-  MANDATORY CONSTRAINT
-    Language == #de OR
-    Language == #fr OR
-    Language == #it OR
-    Language == #rm OR
-    Language == #en;
-  END LocalisedMText;
-
-  STRUCTURE MultilingualText EXTENDS Localisation_V1.MultilingualText =
-    LocalisedText(EXTENDED) : BAG {1..*} OF LocalisedText;
-  END MultilingualText;  
-  
-  STRUCTURE MultilingualMText EXTENDS Localisation_V1.MultilingualMText =
-    LocalisedText(EXTENDED) : BAG {1..*} OF LocalisedMText;
-  END MultilingualMText;
-
-END LocalisationCH_V1.
-
-!! ########################################################################
-!!@technicalContact=models@geo.admin.ch
-!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
-MODEL Dictionaries_V1 (en)
-  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
-
-  IMPORTS UNQUALIFIED InternationalCodes_V1;
-
-  TOPIC Dictionaries (ABSTRACT) =
-
-    STRUCTURE Entry (ABSTRACT) =
-      Text: MANDATORY TEXT;
-    END Entry;
-      
-    CLASS Dictionary =
-      Language: MANDATORY LanguageCode_ISO639_1;
-      Entries: LIST OF Entry;
-    END Dictionary;
-
-  END Dictionaries;
-
-END Dictionaries_V1.
-
-!! ########################################################################
-!!@technicalContact=models@geo.admin.ch
-!!@furtherInformation=http://www.geo.admin.ch/internet/geoportal/de/home/topics/geobasedata/models.html
-MODEL DictionariesCH_V1 (en)
-  AT "http://www.geo.admin.ch" VERSION "2011-08-30" =
-
-  IMPORTS UNQUALIFIED InternationalCodes_V1;
-  IMPORTS Dictionaries_V1;
-
-  TOPIC Dictionaries (ABSTRACT) EXTENDS Dictionaries_V1.Dictionaries =
-
-    CLASS Dictionary (EXTENDED) =
-    MANDATORY CONSTRAINT
-      Language == #de OR
-      Language == #fr OR
-      Language == #it OR
-      Language == #rm OR
-      Language == #en;
-    END Dictionary;
-
-  END Dictionaries;
-
-END DictionariesCH_V1.
-
-!! ########################################################################
-','2019-09-30 09:21:13.459');
+','2019-10-23 10:46:02.725');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('CHBase_Part1_GEOMETRY_20110830.ili','2.3','GeometryCHLV03_V1{ CoordSys Units INTERLIS} GeometryCHLV95_V1{ CoordSys Units INTERLIS}','/* ########################################################################
    CHBASE - BASE MODULES OF THE SWISS FEDERATION FOR MINIMAL GEODATA MODELS
    ======
@@ -2046,7 +2052,7 @@ TYPE MODEL GeometryCHLV95_V1 (en)
 END GeometryCHLV95_V1.
 
 !! ########################################################################
-','2019-09-30 09:21:13.459');
+','2019-10-23 10:46:02.725');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_MODEL (filename,iliversion,modelName,content,importDate) VALUES ('SO_AGI_MOpublic_20190424.ili','2.3','SO_AGI_MOpublic_20190424{ GeometryCHLV95_V1 CHAdminCodes_V1 Units}','INTERLIS 2.3;
 
 /** !!------------------------------------------------------------------------------ 
@@ -2204,9 +2210,9 @@ VERSION "2018-04-30"  =
       /** Geometrie
        */
       Geometrie : MANDATORY GeometryCHLV95_V1.Line;
-      /** Transportmedium (Integer-Repräsentation)
+      /** Transportmedium (Text-Repräsentation)
        */
-      Art : MANDATORY TEXT*100;
+      Art_txt : MANDATORY TEXT*100;
       /** Betreiber
        */
       Betreiber : MANDATORY TEXT*40;
@@ -2342,6 +2348,9 @@ VERSION "2018-04-30"  =
       /** Textorientierung
        */
       Orientierung : MANDATORY Orientierung;
+      /** Name der Gemeinde
+       */
+      Gemeinde : MANDATORY TEXT*255;
     END Flurname;
 
     CLASS Gebaeudeadresse =
@@ -2426,6 +2435,9 @@ VERSION "2018-04-30"  =
       /** Datum der Nachführung durch Geometer
        */
       Nachfuehrung : INTERLIS.XMLDate;
+      /** Name der Gemeinde
+       */
+      Gemeinde : MANDATORY TEXT*255;
     END Gelaendename;
 
     CLASS Grenzpunkt =
@@ -2700,7 +2712,7 @@ VERSION "2018-04-30"  =
   END MOpublic;
 
 END SO_AGI_MOpublic_20190424.
-','2019-09-30 09:21:13.459');
+','2019-10-23 10:46:02.725');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_SETTINGS (tag,setting) VALUES ('ch.ehi.ili2db.createMetaInfo','True');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_SETTINGS (tag,setting) VALUES ('ch.ehi.ili2db.beautifyEnumDispName','underscore');
 INSERT INTO agi_mopublic_pub.T_ILI2DB_SETTINGS (tag,setting) VALUES ('ch.interlis.ili2c.ilidirs','.;http://models.geo.admin.ch');

@@ -1,5 +1,5 @@
 SELECT
-    objekt.art,
+    objekt.art AS art_txt,
     objekt.betreiber,
     CAST(objekt.t_datasetname AS INT) AS bfs_nr,    
     aimport.importdate AS importdatum,

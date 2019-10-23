@@ -18,11 +18,14 @@ SELECT
             THEN 'Half'
         ELSE pos.vali
     END AS vali,
-    pos.pos
+    pos.pos,
+    gemeinde.aname AS gemeinde
 FROM
     agi_dm01avso24.nomenklatur_gelaendename AS gelaendename  
     LEFT JOIN agi_dm01avso24.nomenklatur_gelaendenamepos AS pos  
         ON pos.gelaendenamepos_von = gelaendename.t_id
+    LEFT JOIN agi_dm01avso24.gemeindegrenzen_gemeinde AS gemeinde
+        ON gemeinde.bfsnr = CAST(pos.t_datasetname AS integer)
     LEFT JOIN agi_dm01avso24.nomenklatur_nknachfuehrung AS nachfuehrung 
         ON gelaendename.entstehung = nachfuehrung.t_id
     LEFT JOIN agi_dm01avso24.t_ili2db_basket AS basket
@@ -31,9 +34,9 @@ FROM
     (
         SELECT
             max(importdate) AS importdate, dataset
-		FROM
+        FROM
             agi_dm01avso24.t_ili2db_import
-		GROUP BY
+        GROUP BY
             dataset 
     ) AS  aimport
         ON basket.dataset = aimport.dataset      
